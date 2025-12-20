@@ -12,6 +12,8 @@
 ## ✨ Features
 
 - **📊 Historical Data Analysis**: Explore trends in mission launches, analyzing success rates across different vehicle families (PSLV, GSLV, etc.) and decades.
+- **🚀 Space-Themed UI**: An immersive, dark-mode design with a starry background and rocket visuals for a premium user experience.
+- **📈 Enhanced Visualizations**: Includes a "Mission Capabilities" chart (Stacked Bar) to clearly show launch vehicle versatility across different orbits.
 - **🤖 Predictive Modeling**: A trained Random Forest Classifier predicts the probability of mission success given specific launch parameters.
 - **📈 Interactive Dashboard**: A user-friendly Streamlit interface offering dynamic charts, filters, and visualizations powered by Plotly.
 - **🔌 RESTful API**: A high-performance FastAPI backend that serves analysis data and exposes the ML model for predictions.

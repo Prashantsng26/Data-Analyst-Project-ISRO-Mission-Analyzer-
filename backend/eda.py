@@ -39,10 +39,8 @@ def get_strategic_focus(df):
 
 def get_orbit_complexity(df):
     """
-    Cross-tabulation of Launch Vehicle (Family) vs Orbit Type.
-    Normalized by total launches for each vehicle.
+    Returns data for Sankey Diagram: Source (Vehicle) -> Target (Orbit).
     """
-    # Ensure Family column exists (it might not if we passed a fresh df, but reusing logic is better)
     if 'Family' not in df.columns:
         def get_family(name):
             name = name.upper()
@@ -52,10 +50,9 @@ def get_orbit_complexity(df):
             return 'Other'
         df['Family'] = df['launch_vehicle'].apply(get_family)
 
-    ct = pd.crosstab(df['Family'], df['orbit_type'], normalize='index')
-    # Convert to a format easy to plot (heatmap)
-    # Reset index to make Family a column, then melt? Or just return raw matrix as list of dicts?
-    # List of dicts where each dict is a row (Family) is good.
+    # Group by Family and Orbit to get counts (Link Value)
+    links = df.groupby(['Family', 'orbit_type']).size().reset_index(name='value')
+    links = links.rename(columns={'Family': 'source', 'orbit_type': 'target'})
     
-    ct_reset = ct.reset_index()
-    return ct_reset.to_dict(orient='records')
+    # Return list of dicts: [{'source': 'PSLV', 'target': 'SSPO', 'value': 20}, ...]
+    return links.to_dict(orient='records')
