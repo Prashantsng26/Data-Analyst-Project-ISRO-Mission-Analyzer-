@@ -9,6 +9,8 @@
 
 **ISRO Mission Analyzer** is a comprehensive, data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It combines a robust backend for data processing with an interactive frontend dashboard to visualize mission trends, success rates, and strategic shifts over decades. Additionally, it features a Machine Learning model to predict the success probability of future missions based on vehicle and orbital parameters.
 
+![Dashboard Preview](assets/dashboard_preview.png)
+
 ## ✨ Features
 
 - **📊 Historical Data Analysis**: Explore trends in mission launches, analyzing success rates across different vehicle families (PSLV, GSLV, etc.) and decades.
@@ -55,6 +57,12 @@
    ```bash
    pip install -r requirements.txt
    ```
+
+## ⚙️ Configuration
+The frontend connects to the backend via `API_URL`. By default, it points to `http://127.0.0.1:8000/api`. You can override this by setting the environment variable:
+```bash
+export API_URL="http://your-backend-url/api"
+```
 
 ## 🏃‍♂️ How to Run
 
