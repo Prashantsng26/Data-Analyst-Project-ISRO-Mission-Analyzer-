@@ -2,13 +2,18 @@ import streamlit as st
 import requests
 import pandas as pd
 import plotly.express as px
-
-# Configuration
 import plotly.graph_objects as go
 import base64
-
-# Configuration
 import os
+import sys
+
+# Ensure backend is in path
+sys.path.append(os.path.dirname(__file__))
+
+# Import backend modules directly for Streamlit Cloud deployment
+from backend.data_loader import load_data
+from backend.eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
+from backend.ml_model import train_model, get_model_metrics, predict_success
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api")
@@ -19,14 +24,30 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- Data & Model Initialization (Streamlit Native) ---
+@st.cache_resource
+def init_app_state():
+    df = load_data()
+    if not df.empty:
+        train_model(df)
+    return df
+
+# Initialize
+df = init_app_state()
+
 # --- Custom CSS for Space Theme ---
 def get_base64_of_bin_file(bin_file):
-    with open(bin_file, 'rb') as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except FileNotFoundError:
+        return ""
 
 def set_png_as_page_bg(png_file):
     bin_str = get_base64_of_bin_file(png_file)
+    if not bin_str:
+        return
     page_bg_img = f'''
     <style>
     .stApp {{
@@ -42,17 +63,12 @@ def set_png_as_page_bg(png_file):
     .block-container {{
         background-color: rgba(10, 10, 25, 0.85);
         border-radius: 15px;
-        padding: 1rem 2rem; /* Reduced top/bottom padding */
+        padding: 1rem 2rem;
         box-shadow: 0 0 20px rgba(0, 200, 255, 0.2);
-        max-width: 95%; /* Make main content wider */
+        max-width: 95%;
     }}
-    /* Sidebar resizing */
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {{
         width: 250px;
-    }}
-    [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {{
-        width: 250px;
-        margin-left: -250px;
     }}
     h1, h2, h3, .stMarkdown, .stMetricLabel {{
         color: #e0e0ff !important;
@@ -69,19 +85,31 @@ def set_png_as_page_bg(png_file):
 try:
     set_png_as_page_bg('background.png')
 except Exception as e:
-    st.warning("Background image not found. Using default theme.")
+    pass
 
-def fetch_data(endpoint):
-    try:
-        response = requests.get(f"{API_URL}/{endpoint}")
-        if response.status_code == 200:
-            return response.json()
-        else:
-            st.error(f"Error fetching data from {endpoint}: {response.status_code}")
-            return []
-    except requests.exceptions.ConnectionError:
-        st.error("Cannot connect to Backend API. Please ensure FastAPI is running.")
-        return []
+# Helper to provide data either from API or Local Functions
+def get_data(endpoint, **kwargs):
+    # If API_URL is set to a non-local or explicitly configured, try requests
+    # But for a simpler "whole-in-streamlit" deployment, we prefer local calls.
+    # We will use local calls as primary to ensure Streamlit Cloud works without backend setup.
+    
+    if endpoint == "kpi_total_success_rate":
+        rate = df['Success_Flag'].mean() if not df.empty else 0
+        return {"success_rate": rate}
+    elif endpoint == "growth_trend":
+        return get_growth_trend(df)
+    elif endpoint == "success_rates":
+        return get_success_rates(df)
+    elif endpoint == "strategic_focus":
+        return get_strategic_focus(df)
+    elif endpoint == "orbit_complexity":
+        return get_orbit_complexity(df)
+    elif endpoint == "model_performance":
+        return get_model_metrics()
+    elif endpoint == "predict_mission":
+        prob = predict_success(kwargs.get('vehicle'), kwargs.get('orbit'))
+        return {"prediction_probability": prob}
+    return None
 
 # Sidebar
 st.sidebar.title("ISRO Analytics")
@@ -94,7 +122,7 @@ st.markdown("Deep dive into the strategic evolution of Indian Space Research Org
 # KPI Section
 kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
 with kpi_col1:
-    kpi_data = fetch_data("kpi_total_success_rate")
+    kpi_data = get_data("kpi_total_success_rate")
     if kpi_data:
         rate = kpi_data.get("success_rate", 0) * 100
         st.metric(label="Overall Mission Success Rate", value=f"{rate:.1f}%")
@@ -109,7 +137,7 @@ with tab1:
     
     with col1:
         st.subheader("Growth Trend")
-        growth_data = fetch_data("growth_trend")
+        growth_data = get_data("growth_trend")
         if growth_data:
             df_growth = pd.DataFrame(growth_data)
             fig_growth = px.line(df_growth, x='Year', y='Mission_Count', title='Missions Launched per Year', markers=True)
@@ -118,7 +146,7 @@ with tab1:
             
     with col2:
         st.subheader("Success Rates by Vehicle Family")
-        success_data = fetch_data("success_rates")
+        success_data = get_data("success_rates")
         if success_data:
             df_success = pd.DataFrame(success_data)
             fig_success = px.bar(df_success, x='Family', y='Success_Rate', title='Success Rate (Top Families)', 
@@ -130,7 +158,7 @@ with tab1:
     
     with col3:
         st.subheader("Strategic Focus (Application)")
-        focus_data = fetch_data("strategic_focus")
+        focus_data = get_data("strategic_focus")
         if focus_data:
             df_focus = pd.DataFrame(focus_data)
             fig_focus = px.pie(df_focus, names='Application', values='Count', title='Mission Distribution by Application')
@@ -139,18 +167,13 @@ with tab1:
             
     with col4:
         st.subheader("Mission Capabilities (Vehicle to Orbit)")
-        orbit_data = fetch_data("orbit_complexity")
+        orbit_data = get_data("orbit_complexity")
         if orbit_data:
-            # Data: [{'source': 'PSLV', 'target': 'SSPO', 'value': 20}, ...]
             df_links = pd.DataFrame(orbit_data)
-            
-            # Simplified Chart: Stacked Bar
-            # X = Vehicle (source), Y = Count (value), Color = Orbit (target)
             fig_bar = px.bar(df_links, x='source', y='value', color='target', 
                              title="Launch Vehicle Capabilities",
                              labels={'source': 'Launch Vehicle', 'value': 'Number of Missions', 'target': 'Orbit Type'},
                              text_auto=True)
-            
             fig_bar.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff')
             st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -159,7 +182,7 @@ with tab2:
     st.markdown("Predict the probability of success for a hypothetical mission based on historical patterns.")
     
     # Model Performance
-    perf_data = fetch_data("model_performance")
+    perf_data = get_data("model_performance")
     if perf_data:
         st.write("Current Model Performance (Test Set):")
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
@@ -172,10 +195,8 @@ with tab2:
     
     # Input Form
     with st.form("prediction_form"):
-        # We need options for selectbox. Hardcoding major ones or fetching unique values would be best.
-        # For simplicity, hardcoding common ones found in dataset.
-        vehicle_options = ['PSLV', 'GSLV', 'LVM3', 'SSLV', 'ASLV', 'SLV-3']
-        orbit_options = ['SSPO', 'GSO', 'GTO', 'LEO', 'Lunar', 'Suborbital', 'Martian']
+        vehicle_options = sorted(df['launch_vehicle'].unique().tolist()) if not df.empty else ['PSLV', 'GSLV']
+        orbit_options = sorted(df['orbit_type'].unique().tolist()) if not df.empty else ['SSPO', 'GSO']
         
         p_vehicle = st.selectbox("Launch Vehicle Family/Type", vehicle_options)
         p_orbit = st.selectbox("Target Orbit", orbit_options)
@@ -183,15 +204,11 @@ with tab2:
         submit = st.form_submit_button("Predict Probability")
         
         if submit:
-            payload = {"vehicle": p_vehicle, "orbit": p_orbit}
-            try:
-                res = requests.post(f"{API_URL}/predict_mission", json=payload)
-                if res.status_code == 200:
-                    prob = res.json().get("prediction_probability", 0)
-                    st.success(f"Predicted Success Probability: {prob*100:.2f}%")
-                    if prob > 0.8:
-                        st.balloons()
-                else:
-                    st.error("Prediction failed.")
-            except Exception as e:
-                st.error(f"Error: {e}")
+            res = get_data("predict_mission", vehicle=p_vehicle, orbit=p_orbit)
+            if res:
+                prob = res.get("prediction_probability", 0)
+                st.success(f"Predicted Success Probability: {prob*100:.2f}%")
+                if prob > 0.8:
+                    st.balloons()
+            else:
+                st.error("Prediction failed.")

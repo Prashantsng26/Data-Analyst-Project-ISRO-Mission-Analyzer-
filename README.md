@@ -58,6 +58,16 @@
    pip install -r requirements.txt
    ```
 
+## ☁️ Deployment
+
+### Streamlit Cloud (Self-Contained)
+The application has been optimized to be **self-contained**. The Streamlit frontend now directly integrates the backend logic, making it perfect for one-click deployment on [Streamlit Cloud](https://streamlit.io/cloud).
+
+1. Push your code to GitHub.
+2. Connect your repository to Streamlit Cloud.
+3. Select `app.py` as the main file.
+4. Deployment is complete!
+
 ## ⚙️ Configuration
 The frontend connects to the backend via `API_URL`. By default, it points to `http://127.0.0.1:8000/api`. You can override this by setting the environment variable:
 ```bash
