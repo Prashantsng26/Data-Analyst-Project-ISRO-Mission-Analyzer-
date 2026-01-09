@@ -1,15 +1,15 @@
 # 🚀 ISRO Mission Analyzer
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-FF4B4B.svg)](https://streamlit.io/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104%2B-009688.svg)](https://fastapi.tiangolo.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 ## 📖 Overview
 
 **ISRO Mission Analyzer** is a comprehensive, data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It combines a robust backend for data processing with an interactive frontend dashboard to visualize mission trends, success rates, and strategic shifts over decades. Additionally, it features a Machine Learning model to predict the success probability of future missions based on vehicle and orbital parameters.
 
-![Dashboard Preview](assets/dashboard_preview.png)
+
+## 📊 Data Source
+
+The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on Kaggle](https://www.kaggle.com/datasets/prashantsng26/isro-space-missions-1963-2025)**, provided as an SQL dump (`isro-missions.sql`). It includes comprehensive details on historical launches, vehicles, and mission outcomes.
 
 ## ✨ Features
 
