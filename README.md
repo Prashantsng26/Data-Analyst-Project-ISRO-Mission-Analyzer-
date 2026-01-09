@@ -2,30 +2,30 @@
 
 ## 📖 Overview
 
-**ISRO Mission Analyzer** is a comprehensive, data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It combines a robust backend for data processing with an interactive frontend dashboard to visualize mission trends, success rates, and strategic shifts over decades.Additionally, it features a Machine Learning model to estimate mission success probability based on historical vehicle and orbital patterns, intended for exploratory analysis.
-
+**ISRO Mission Analyzer** is a data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It features an interactive dashboard to visualize mission trends and uses a Random Forest classifier for **exploratory success probability estimation** based on historical launch parameters.
 
 ## 📊 Data Source
 
-The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on Kaggle](https://www.kaggle.com/datasets/prashantsng26/isro-space-missions-1963-2025)**, provided as an SQL dump (`isro-missions.sql`). It includes comprehensive details on historical launches, vehicles, and mission outcomes.
+The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on Kaggle](https://www.kaggle.com/datasets/prashantsng26/isro-space-missions-1963-2025)**, provided as an SQL dump (`isro-missions.sql`).
 
 ## ✨ Features
 
-- **📊 Historical Data Analysis**: Explore trends in mission launches, analyzing success rates across different vehicle families (PSLV, GSLV, etc.) and decades.
-- **🚀 Space-Themed UI**: An immersive, dark-mode design with a starry background and rocket visuals for a premium user experience.
-- **📈 Enhanced Visualizations**: Includes a "Mission Capabilities" chart (Stacked Bar) to clearly show launch vehicle versatility across different orbits.
-- **🤖 Predictive Modeling**:
-- Trained a Random Forest Classifier on historical ISRO mission data
-- Achieved 93.33% accuracy and 0.64 ROC-AUC using cross-validation
-  - *Note: High accuracy is influenced by class imbalance in historical mission outcomes; ROC-AUC provides a more balanced performance view.*
-- Used feature importance to interpret the influence of vehicle and orbit type
-- **📈 Interactive Dashboard**: A user-friendly Streamlit interface offering dynamic charts, filters, and visualizations powered by Plotly.
-- **🔌 RESTful API**: A high-performance FastAPI backend that serves analysis data and exposes the ML model for predictions.
-- **📂 SQL Integration**: Seamlessly parses and loads mission data from SQL dumps for analysis.
-- **⚠️ Model Limitations**:
-- Dataset is limited to publicly available Kaggle data and may not capture confidential mission parameters
-- External factors such as weather conditions, payload sensitivity, and real-time system health are not included
-- Predictions represent historical trends and probabilistic estimates, not real-world mission guarantees
+- **📊 Historical Data Analysis**: Explore mission trends, analyzing success rates across different vehicle families and decades.
+- **🚀 Space-Themed UI**: Immersive dark-mode design for an enhanced analytics experience.
+- **📈 Enhanced Visualizations**: Integrated Plotly charts showing vehicle capabilities and orbital distributions.
+- **🤖 Exploratory ML Modeling**:
+  - Trained a Random Forest Classifier to estimate success probability.
+  - **Performance**: ~92.6% Accuracy, ~96.1% F1-Score.
+  - *Note: Metrics are influenced by class imbalance (93% historical success rate). ROC-AUC is de-emphasized in favor of precision-recall transparency.*
+- **Top Influential Features**: Visualizes tree-based feature importance for launch vehicle and orbit configurations.
+- **🔌 RESTful API**: FastAPI backend serving analysis data and ML estimates.
+
+## ⚠️ Model Limitations & Transparency
+
+- **Class Imbalance**: The historical data is heavily skewed towards successful missions (~93%). This naturally inflates accuracy and recall.
+- **Scope**: The model is intended for **exploratory analysis** and as a demonstration of a data science pipeline; it is not for operational mission forecasting.
+- **Parameters**: External variables like weather, real-time sensor data, and payload complexities are not captured in this historical dataset.
+
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -33,16 +33,16 @@ The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on
 - **Plotly**: For creating rich, interactive data visualizations.
 
 ### Backend
-- **FastAPI**: Chosen for fast, scalable model serving and clean API design .
-- **Pandas**: For data manipulation and analysis.
-- **scikit-learn**: For training and serving the predictive machine learning model.
-- **SQLite**: Lightweight analytical storage for rapid prototyping.
+- **FastAPI**: High-performance API for data serving and model inference.
+- **Pandas**: For data manipulation and feature engineering.
+- **scikit-learn**: For the machine learning pipeline (Random Forest).
+- **SQLite**: Lightweight storage for mission data.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Python 3.9 or higher
-- Pip (Python Package Manager)
+- Pip
 
 ### Installation
 
@@ -65,61 +65,32 @@ The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on
 
 ## ☁️ Deployment
 
-### Streamlit Cloud (Self-Contained)
-The application has been optimized to be **self-contained**. The Streamlit frontend now directly integrates the backend logic, making it perfect for one-click deployment on [Streamlit Cloud](https://streamlit.io/cloud).
+The application is optimized for **self-contained deployment** on [Streamlit Cloud](https://streamlit.io/cloud).
 
 1. Push your code to GitHub.
 2. Connect your repository to Streamlit Cloud.
 3. Select `app.py` as the main file.
-4. Deployment is complete!
-
-## ⚙️ Configuration
-The frontend connects to the backend via `API_URL`. By default, it points to `http://127.0.0.1:8000/api`. You can override this by setting the environment variable:
-```bash
-export API_URL="http://your-backend-url/api"
-```
 
 ## 🏃‍♂️ How to Run
 
 ### Method 1: VS Code (Recommended)
-1. Open the **Run and Debug** view in VS Code (Activity Bar on the left).
-2. Select **"Run Full Stack App"** from the dropdown at the top.
+1. Open the **Run and Debug** view.
+2. Select **"Run Full Stack App"**.
 3. Click the green Play button.
-   - *This automatically handles the environment and runs both backend and frontend.*
 
-### Method 2: One-Click Script
-Open your terminal in the project directory and run:
+### Method 2: Manual Terminal Commands
+Run the Streamlit app directly (includes integrated backend logic):
 ```bash
-./run_app.sh
-```
-
-### Method 3: Manual Terminal Commands
-If you prefer identifying issues step-by-step, run the backend and frontend in separate terminals:
-
-**Terminal 1 (Backend API):**
-```bash
-source venv/bin/activate
-uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-**Terminal 2 (Frontend Dashboard):**
-```bash
-source venv/bin/activate
 streamlit run app.py
 ```
 
 ## 📂 Project Structure
 
 ```
-├── backend/                # Backend logic
-│   ├── main.py             # FastAPI entry point & endpoints
-│   ├── model.py            # ML Model logic
-│   └── database.py         # DB connection & queries
-├── frontend/               # Frontend components (if separated)
-├── data/                   # Data files (SQL dumps, etc.)
-├── app.py                  # Streamlit Dashboard entry point
+├── backend/                # Backend logic (FastAPI, Model, Data)
+├── data/                   # Data files (SQL dumps)
+├── app.py                  # Streamlit Dashboard (Entry point)
 ├── requirements.txt        # Project dependencies
-├── run_app.sh              # Helper script to run the app
 └── README.md               # Project documentation
 ```
 
@@ -127,15 +98,9 @@ streamlit run app.py
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ---
 Made with ❤️ by [Prashant Singh](https://github.com/Prashantsng26)

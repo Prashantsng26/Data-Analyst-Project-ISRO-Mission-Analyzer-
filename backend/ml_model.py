@@ -42,29 +42,33 @@ def train_model(df):
     clf = Pipeline(steps=[('preprocessor', preprocessor),
                           ('classifier', RandomForestClassifier(n_estimators=100, random_state=42))])
     
-    # Train/Test Split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # --- 1. Data Preparation (Reproducible Split) ---
+    # We use stratified splitting because of the severe class imbalance (~93% success rate).
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
     
-    # Train
+    # --- 2. Model Training ---
     clf.fit(X_train, y_train)
     
-    # Evaluate
+    # --- 3. Model Evaluation ---
+    # We compute multiple metrics to provide a transparent view of performance.
     y_pred = clf.predict(X_test)
     
-    # ROC-AUC
-    # Random Forest has predict_proba
-    y_prob = clf.predict_proba(X_test)[:, 1] if clf.classes_.shape[0] > 1 else [1.0] * len(y_test)
+    # Check if we have both classes in the test set to compute ROC-AUC
+    classes = clf.classes_
+    has_both_classes = len(classes) > 1 and len(np.unique(y_test)) > 1
     
-    auc = 0.5
-    try:
-        if len(set(y_test)) > 1:
-            auc = roc_auc_score(y_test, y_prob)
-        else:
-            auc = 1.0
-    except:
-        pass
+    if has_both_classes:
+        # We ensure we're getting the probability for the positive class (1)
+        pos_label_index = np.where(classes == 1)[0][0]
+        y_prob = clf.predict_proba(X_test)[:, pos_label_index]
+        auc = roc_auc_score(y_test, y_prob)
+    else:
+        auc = 0.5 # Default for single-class or uncomputable ROC-AUC
 
-    metrics = {
+    # Package metrics for the frontend
+    model_metrics = {
         'Accuracy': accuracy_score(y_test, y_pred),
         'Precision': precision_score(y_test, y_pred, zero_division=0),
         'Recall': recall_score(y_test, y_pred, zero_division=0),
@@ -73,9 +77,7 @@ def train_model(df):
     }
     
     model_pipeline = clf
-    model_metrics = metrics
-    
-    return metrics
+    return model_metrics
 
 def get_model_metrics():
     return model_metrics

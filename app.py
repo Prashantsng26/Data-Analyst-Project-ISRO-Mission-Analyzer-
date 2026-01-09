@@ -118,8 +118,8 @@ st.sidebar.title("ISRO Analytics")
 st.sidebar.info("Analyze historical mission data and predict future outcomes.")
 
 # Header
-st.title("🚀 ISRO Mission Analyzer & Success Predictor")
-st.markdown("Deep dive into the strategic evolution of Indian Space Research Organisation.")
+st.title("🚀 ISRO Mission Success Probability Estimator (Exploratory Analysis)")
+st.markdown("Estimates mission success probability based on historical patterns; not intended for operational forecasting.")
 
 # KPI Section
 kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
@@ -180,27 +180,30 @@ with tab1:
             st.plotly_chart(fig_bar, use_container_width=True)
 
 with tab2:
-    st.header("Mission Success Predictor")
-    st.markdown("Predict the probability of success for a hypothetical mission based on historical patterns.")
+    st.header("Exploratory Success Estimation")
+    st.markdown("Estimate the probability of success for a hypothetical mission configuration based on historical patterns.")
     
     # Model Performance
     perf_data = get_data("model_performance")
     if perf_data:
-        st.write("Current Model Performance (Test Set):")
-        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
+        st.subheader("Model Performance Indicators")
+        st.info("“High recall and accuracy are influenced by the dominance of successful missions in historical data.”")
+        
+        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         m_col1.metric("Accuracy", f"{perf_data.get('Accuracy',0):.2f}")
         m_col2.metric("Precision", f"{perf_data.get('Precision',0):.2f}")
         m_col3.metric("Recall", f"{perf_data.get('Recall',0):.2f}")
         m_col4.metric("F1-Score", f"{perf_data.get('F1-Score',0):.2f}")
-        m_col5.metric("ROC-AUC", f"{perf_data.get('ROC-AUC',0):.2f}")
+        
+        st.caption("“ROC-AUC is de-emphasized due to class imbalance in historical mission outcomes; precision–recall metrics better reflect model behavior.”")
     
     # Feature Importance Chart
     feat_data = get_data("feature_importance")
     if feat_data:
-        st.subheader("Interpretation: Feature Influence")
+        st.subheader("Top Influential Features (Tree-Based Importance)")
         df_feat = pd.DataFrame(feat_data)
         fig_feat = px.bar(df_feat, y='Feature', x='Importance', orientation='h', 
-                          title='Top 10 Influential Factors (Launch Vehicle & Orbit)',
+                          title='Top 10 Influential Factors (Exploratory)',
                           color='Importance', color_continuous_scale='Viridis')
         fig_feat.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff',
                                yaxis={'categoryorder':'total ascending'})
@@ -210,9 +213,9 @@ with tab2:
     with st.expander("⚠️ Model Limitations & Disclaimer"):
         st.markdown("""
         - **Data Source**: This model is trained on historical ISRO mission data from Kaggle (1963-2025).
-        - **Exclusions**: Real-time factors like weather, sensor health, and payload-specific complexities are not modeled.
-        - **Interpretations**: Predictions are probabilistic estimates based on historical trends and should be used for exploratory purposes only.
-        - **Metric Note**: High accuracy is influenced by class imbalance (high historical success rate); ROC-AUC provides a more balanced performance view.
+        - **Exclusions**: Real-time factors like weather, sensor health, and payload-specific complexities are not captured.
+        - **Interpretations**: Predictions are probabilistic estimates based on historical trends for exploratory analysis, not for operational mission guarantees.
+        - **Class Imbalance**: High metrics are influenced by the high historical success rate $(\sim93\%)$.
         """)
     
     st.divider()
@@ -231,7 +234,7 @@ with tab2:
             res = get_data("predict_mission", vehicle=p_vehicle, orbit=p_orbit)
             if res:
                 prob = res.get("prediction_probability", 0)
-                st.success(f"Predicted Success Probability: {prob*100:.2f}%")
+                st.success(f"Estimated Success Probability: {prob*100:.2f}%")
                 if prob > 0.8:
                     st.balloons()
             else:
