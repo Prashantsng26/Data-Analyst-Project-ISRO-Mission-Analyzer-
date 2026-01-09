@@ -231,12 +231,14 @@ with tab2:
         submit = st.form_submit_button("Predict Probability")
         
         if submit:
+            # Fetch mission prediction from backend functions
             res = get_data("predict_mission", vehicle=p_vehicle, orbit=p_orbit)
-            prob = res.get("prediction_probability") if res else None
+            # Safe extraction of probability with None check
+            prob = res.get("prediction_probability") if (isinstance(res, dict)) else None
             
             if prob is not None:
-                st.success(f"Estimated Success Probability: {prob*100:.2f}%")
-                if prob > 0.8:
+                st.success(f"Estimated Success Probability: {float(prob)*100:.2f}%")
+                if float(prob) > 0.8:
                     st.balloons()
             else:
-                st.error("Prediction failed. The model might not be initialized or the input is invalid.")
+                st.error("Exploratory prediction unavailable. The model is either initializing or the parameters provided are outside historical bounds.")
