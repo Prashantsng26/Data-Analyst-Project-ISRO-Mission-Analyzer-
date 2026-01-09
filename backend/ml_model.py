@@ -68,7 +68,7 @@ def train_model(df):
         auc = 0.5 # Default for single-class or uncomputable ROC-AUC
 
     # Package metrics for the frontend
-    model_metrics = {
+    metrics = {
         'Accuracy': accuracy_score(y_test, y_pred),
         'Precision': precision_score(y_test, y_pred, zero_division=0),
         'Recall': recall_score(y_test, y_pred, zero_division=0),
@@ -76,18 +76,22 @@ def train_model(df):
         'ROC-AUC': auc
     }
     
+    # Store globally for API usage, but return for Streamlit usage
     model_pipeline = clf
-    return model_metrics
+    model_metrics = metrics
+    return clf, metrics
 
 def get_model_metrics():
     return model_metrics
 
-def predict_success(vehicle, orbit):
+def predict_success(vehicle, orbit, pipeline=None):
     """
     Predicts probability of success.
     """
     global model_pipeline
-    if model_pipeline is None:
+    target_pipeline = pipeline if pipeline is not None else model_pipeline
+    
+    if target_pipeline is None:
         return None
     
     input_data = pd.DataFrame({
@@ -96,13 +100,10 @@ def predict_success(vehicle, orbit):
     })
     
     # Predict probability
-    # classes_ are usually [0, 1] if both exist.
-    # We want probability of class 1.
-    probs = model_pipeline.predict_proba(input_data)
+    probs = target_pipeline.predict_proba(input_data)
     
-    # Check if '1' is the second class (index 1) which is standard if 0 and 1 are present.
-    # If only one class was in training (e.g. all success), handle that.
-    classes = model_pipeline.classes_
+    # Check if '1' is the second class
+    classes = target_pipeline.classes_
     if 1 in classes:
         index_1 = np.where(classes == 1)[0][0]
         return probs[0][index_1]
@@ -110,22 +111,24 @@ def predict_success(vehicle, orbit):
         return 0.0 # If model never saw a success? Unlikely for ISRO :)
 
 
-def get_feature_importance():
+def get_feature_importance(pipeline=None):
     """
     Returns feature importance from the trained model.
     """
     global model_pipeline
-    if model_pipeline is None:
+    target_pipeline = pipeline if pipeline is not None else model_pipeline
+    
+    if target_pipeline is None:
         return None
     
     try:
         # Get categorical encoder from preprocessor
-        preprocessor = model_pipeline.named_steps['preprocessor']
+        preprocessor = target_pipeline.named_steps['preprocessor']
         encoder = preprocessor.named_transformers_['cat']
         cat_features = encoder.get_feature_names_out(['launch_vehicle', 'orbit_type'])
         
         # Get importances from classifier
-        importances = model_pipeline.named_steps['classifier'].feature_importances_
+        importances = target_pipeline.named_steps['classifier'].feature_importances_
         
         feat_imp = pd.DataFrame({
             'Feature': cat_features,

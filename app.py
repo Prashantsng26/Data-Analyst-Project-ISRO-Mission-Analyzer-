@@ -25,15 +25,22 @@ st.set_page_config(
 )
 
 # --- Data & Model Initialization (Streamlit Native) ---
-@st.cache_resource
-def init_app_state():
-    df = load_data()
-    if not df.empty:
-        train_model(df)
-    return df
+@st.cache_data
+def get_isro_data():
+    return load_data()
 
-# Initialize
-df = init_app_state()
+@st.cache_resource
+def get_trained_model(_df):
+    if not _df.empty:
+        # train_model now returns (pipeline, metrics)
+        pipeline, metrics = train_model(_df)
+        return pipeline, metrics
+    return None, {}
+
+# Initialize Data
+df = get_isro_data()
+# Initialize Model & Metrics
+model_obj, model_metrics = get_trained_model(df)
 
 # --- Custom CSS for Space Theme ---
 def get_base64_of_bin_file(bin_file):
@@ -105,11 +112,14 @@ def get_data(endpoint, **kwargs):
     elif endpoint == "orbit_complexity":
         return get_orbit_complexity(df)
     elif endpoint == "model_performance":
-        return get_model_metrics()
+        return model_metrics
     elif endpoint == "feature_importance":
-        return get_feature_importance()
+        return get_feature_importance(pipeline=model_obj)
     elif endpoint == "predict_mission":
-        prob = predict_success(kwargs.get('vehicle'), kwargs.get('orbit'))
+        # Ensure model is ready before predicting
+        if model_obj is None:
+            return {"prediction_probability": None}
+        prob = predict_success(kwargs.get('vehicle'), kwargs.get('orbit'), pipeline=model_obj)
         return {"prediction_probability": prob}
     return None
 
