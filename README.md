@@ -17,6 +17,7 @@ The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on
 - **🤖 Predictive Modeling**:
 - Trained a Random Forest Classifier on historical ISRO mission data
 - Achieved 93.33% accuracy and 0.64 ROC-AUC using cross-validation
+  - *Note: High accuracy is influenced by class imbalance in historical mission outcomes; ROC-AUC provides a more balanced performance view.*
 - Used feature importance to interpret the influence of vehicle and orbit type
 - **📈 Interactive Dashboard**: A user-friendly Streamlit interface offering dynamic charts, filters, and visualizations powered by Plotly.
 - **🔌 RESTful API**: A high-performance FastAPI backend that serves analysis data and exposes the ML model for predictions.

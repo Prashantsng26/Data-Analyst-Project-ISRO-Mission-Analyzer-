@@ -212,6 +212,7 @@ with tab2:
         - **Data Source**: This model is trained on historical ISRO mission data from Kaggle (1963-2025).
         - **Exclusions**: Real-time factors like weather, sensor health, and payload-specific complexities are not modeled.
         - **Interpretations**: Predictions are probabilistic estimates based on historical trends and should be used for exploratory purposes only.
+        - **Metric Note**: High accuracy is influenced by class imbalance (high historical success rate); ROC-AUC provides a more balanced performance view.
         """)
     
     st.divider()
