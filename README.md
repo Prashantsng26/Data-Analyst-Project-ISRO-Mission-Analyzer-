@@ -2,7 +2,7 @@
 
 ## 📖 Overview
 
-**ISRO Mission Analyzer** is a comprehensive, data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It combines a robust backend for data processing with an interactive frontend dashboard to visualize mission trends, success rates, and strategic shifts over decades. Additionally, it features a Machine Learning model to predict the success probability of future missions based on vehicle and orbital parameters.
+**ISRO Mission Analyzer** is a comprehensive, data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It combines a robust backend for data processing with an interactive frontend dashboard to visualize mission trends, success rates, and strategic shifts over decades.Additionally, it features a Machine Learning model to estimate mission success probability based on historical vehicle and orbital patterns, intended for exploratory analysis.
 
 
 ## 📊 Data Source
@@ -14,11 +14,17 @@ The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on
 - **📊 Historical Data Analysis**: Explore trends in mission launches, analyzing success rates across different vehicle families (PSLV, GSLV, etc.) and decades.
 - **🚀 Space-Themed UI**: An immersive, dark-mode design with a starry background and rocket visuals for a premium user experience.
 - **📈 Enhanced Visualizations**: Includes a "Mission Capabilities" chart (Stacked Bar) to clearly show launch vehicle versatility across different orbits.
-- **🤖 Predictive Modeling**: A trained Random Forest Classifier predicts the probability of mission success given specific launch parameters.
+- **🤖 Predictive Modeling**:
+- Trained a Random Forest Classifier on historical ISRO mission data
+- Achieved XX% accuracy and YY ROC-AUC using cross-validation
+- Used feature importance to interpret the influence of vehicle and orbit type
 - **📈 Interactive Dashboard**: A user-friendly Streamlit interface offering dynamic charts, filters, and visualizations powered by Plotly.
 - **🔌 RESTful API**: A high-performance FastAPI backend that serves analysis data and exposes the ML model for predictions.
 - **📂 SQL Integration**: Seamlessly parses and loads mission data from SQL dumps for analysis.
-
+- **⚠️ Model Limitations**:
+- Dataset is limited to publicly available Kaggle data and may not capture confidential mission parameters
+- External factors such as weather conditions, payload sensitivity, and real-time system health are not included
+- Predictions represent historical trends and probabilistic estimates, not real-world mission guarantees
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -26,10 +32,10 @@ The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on
 - **Plotly**: For creating rich, interactive data visualizations.
 
 ### Backend
-- **FastAPI**: For building high-performance APIs.
+- **FastAPI**: Chosen for fast, scalable model serving and clean API design .
 - **Pandas**: For data manipulation and analysis.
 - **scikit-learn**: For training and serving the predictive machine learning model.
-- **SQLite**: In-memory database for efficient data handling.
+- **SQLite**: Lightweight analytical storage for rapid prototyping.
 
 ## 🚀 Getting Started
 
