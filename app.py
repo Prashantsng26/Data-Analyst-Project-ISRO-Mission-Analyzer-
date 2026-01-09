@@ -232,10 +232,11 @@ with tab2:
         
         if submit:
             res = get_data("predict_mission", vehicle=p_vehicle, orbit=p_orbit)
-            if res:
-                prob = res.get("prediction_probability", 0)
+            prob = res.get("prediction_probability") if res else None
+            
+            if prob is not None:
                 st.success(f"Estimated Success Probability: {prob*100:.2f}%")
                 if prob > 0.8:
                     st.balloons()
             else:
-                st.error("Prediction failed.")
+                st.error("Prediction failed. The model might not be initialized or the input is invalid.")
