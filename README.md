@@ -1,7 +1,5 @@
 # 🚀 ISRO Mission Analyzer
 
-
-
 ## 📖 Overview
 
 **ISRO Mission Analyzer** is a comprehensive, data-driven web application designed to analyze the historical missions of the Indian Space Research Organisation (ISRO). It combines a robust backend for data processing with an interactive frontend dashboard to visualize mission trends, success rates, and strategic shifts over decades. Additionally, it features a Machine Learning model to predict the success probability of future missions based on vehicle and orbital parameters.
