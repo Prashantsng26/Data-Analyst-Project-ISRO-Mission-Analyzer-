@@ -11,11 +11,11 @@ from typing import Optional
 try:
     from backend.data_loader import load_data
     from backend.eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
-    from backend.ml_model import train_model, get_model_metrics, predict_success
+    from backend.ml_model import train_model, get_model_metrics, predict_success, get_feature_importance
 except ImportError:
     from data_loader import load_data
     from eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
-    from ml_model import train_model, get_model_metrics, predict_success
+    from ml_model import train_model, get_model_metrics, predict_success, get_feature_importance
 
 class MissionInput(BaseModel):
     vehicle: str
@@ -64,6 +64,10 @@ def orbit_complexity():
 @app.get("/api/model_performance")
 def model_performance():
     return get_model_metrics()
+
+@app.get("/api/feature_importance")
+def feature_importance():
+    return get_feature_importance()
 
 @app.post("/api/predict_mission")
 def predict_mission(mission: MissionInput):

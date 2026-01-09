@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 import pandas as pd
 import numpy as np
 
@@ -51,11 +51,25 @@ def train_model(df):
     # Evaluate
     y_pred = clf.predict(X_test)
     
+    # ROC-AUC
+    # Random Forest has predict_proba
+    y_prob = clf.predict_proba(X_test)[:, 1] if clf.classes_.shape[0] > 1 else [1.0] * len(y_test)
+    
+    auc = 0.5
+    try:
+        if len(set(y_test)) > 1:
+            auc = roc_auc_score(y_test, y_prob)
+        else:
+            auc = 1.0
+    except:
+        pass
+
     metrics = {
         'Accuracy': accuracy_score(y_test, y_pred),
         'Precision': precision_score(y_test, y_pred, zero_division=0),
         'Recall': recall_score(y_test, y_pred, zero_division=0),
-        'F1-Score': f1_score(y_test, y_pred, zero_division=0)
+        'F1-Score': f1_score(y_test, y_pred, zero_division=0),
+        'ROC-AUC': auc
     }
     
     model_pipeline = clf
@@ -93,3 +107,30 @@ def predict_success(vehicle, orbit):
     else:
         return 0.0 # If model never saw a success? Unlikely for ISRO :)
 
+
+def get_feature_importance():
+    """
+    Returns feature importance from the trained model.
+    """
+    global model_pipeline
+    if model_pipeline is None:
+        return None
+    
+    try:
+        # Get categorical encoder from preprocessor
+        preprocessor = model_pipeline.named_steps['preprocessor']
+        encoder = preprocessor.named_transformers_['cat']
+        cat_features = encoder.get_feature_names_out(['launch_vehicle', 'orbit_type'])
+        
+        # Get importances from classifier
+        importances = model_pipeline.named_steps['classifier'].feature_importances_
+        
+        feat_imp = pd.DataFrame({
+            'Feature': cat_features,
+            'Importance': importances
+        }).sort_values(by='Importance', ascending=False)
+        
+        return feat_imp.head(10).to_dict(orient='records')
+    except Exception as e:
+        print(f"Error getting feature importance: {e}")
+        return None

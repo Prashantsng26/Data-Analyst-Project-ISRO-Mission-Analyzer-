@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(__file__))
 # Import backend modules directly for Streamlit Cloud deployment
 from backend.data_loader import load_data
 from backend.eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
-from backend.ml_model import train_model, get_model_metrics, predict_success
+from backend.ml_model import train_model, get_model_metrics, predict_success, get_feature_importance
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api")
@@ -106,6 +106,8 @@ def get_data(endpoint, **kwargs):
         return get_orbit_complexity(df)
     elif endpoint == "model_performance":
         return get_model_metrics()
+    elif endpoint == "feature_importance":
+        return get_feature_importance()
     elif endpoint == "predict_mission":
         prob = predict_success(kwargs.get('vehicle'), kwargs.get('orbit'))
         return {"prediction_probability": prob}
@@ -185,11 +187,32 @@ with tab2:
     perf_data = get_data("model_performance")
     if perf_data:
         st.write("Current Model Performance (Test Set):")
-        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+        m_col1, m_col2, m_col3, m_col4, m_col5 = st.columns(5)
         m_col1.metric("Accuracy", f"{perf_data.get('Accuracy',0):.2f}")
         m_col2.metric("Precision", f"{perf_data.get('Precision',0):.2f}")
         m_col3.metric("Recall", f"{perf_data.get('Recall',0):.2f}")
         m_col4.metric("F1-Score", f"{perf_data.get('F1-Score',0):.2f}")
+        m_col5.metric("ROC-AUC", f"{perf_data.get('ROC-AUC',0):.2f}")
+    
+    # Feature Importance Chart
+    feat_data = get_data("feature_importance")
+    if feat_data:
+        st.subheader("Interpretation: Feature Influence")
+        df_feat = pd.DataFrame(feat_data)
+        fig_feat = px.bar(df_feat, y='Feature', x='Importance', orientation='h', 
+                          title='Top 10 Influential Factors (Launch Vehicle & Orbit)',
+                          color='Importance', color_continuous_scale='Viridis')
+        fig_feat.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff',
+                               yaxis={'categoryorder':'total ascending'})
+        st.plotly_chart(fig_feat, use_container_width=True)
+    
+    # Model Limitations
+    with st.expander("⚠️ Model Limitations & Disclaimer"):
+        st.markdown("""
+        - **Data Source**: This model is trained on historical ISRO mission data from Kaggle (1963-2025).
+        - **Exclusions**: Real-time factors like weather, sensor health, and payload-specific complexities are not modeled.
+        - **Interpretations**: Predictions are probabilistic estimates based on historical trends and should be used for exploratory purposes only.
+        """)
     
     st.divider()
     

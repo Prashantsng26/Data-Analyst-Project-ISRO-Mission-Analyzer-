@@ -16,7 +16,7 @@ The mission data is sourced from the **[ISRO Space Missions 1963-2025 Dataset on
 - **📈 Enhanced Visualizations**: Includes a "Mission Capabilities" chart (Stacked Bar) to clearly show launch vehicle versatility across different orbits.
 - **🤖 Predictive Modeling**:
 - Trained a Random Forest Classifier on historical ISRO mission data
-- Achieved XX% accuracy and YY ROC-AUC using cross-validation
+- Achieved 93.33% accuracy and 0.64 ROC-AUC using cross-validation
 - Used feature importance to interpret the influence of vehicle and orbit type
 - **📈 Interactive Dashboard**: A user-friendly Streamlit interface offering dynamic charts, filters, and visualizations powered by Plotly.
 - **🔌 RESTful API**: A high-performance FastAPI backend that serves analysis data and exposes the ML model for predictions.
