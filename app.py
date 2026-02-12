@@ -7,22 +7,42 @@ import base64
 import os
 import sys
 
-# Ensure backend is in path
-sys.path.append(os.path.dirname(__file__))
-
-# Import backend modules directly for Streamlit Cloud deployment
-from backend.data_loader import load_data
-from backend.eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
-from backend.ml_model import train_model, get_model_metrics, predict_success, get_feature_importance
-
-# Configuration
-API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api")
-
+# --- Initial Setup & Page Config ---
 st.set_page_config(
     page_title="ISRO Mission Analyzer",
     page_icon="🚀",
     layout="wide"
 )
+
+# --- Diagnostic Import Block ---
+try:
+    # Standard Imports
+    import requests
+    import pandas as pd
+    import numpy as np
+    import plotly.express as px
+    import plotly.graph_objects as go
+    import base64
+    import traceback
+
+    # Path setup for backend
+    root_path = os.path.dirname(os.path.abspath(__file__))
+    if root_path not in sys.path:
+        sys.path.insert(0, root_path)
+
+    # Backend Imports
+    from backend.data_loader import load_data
+    from backend.eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
+    from backend.ml_model import train_model, get_model_metrics, predict_success, get_feature_importance
+
+except Exception as e:
+    st.error("❌ Critical Startup Error: Failed to load dependencies or backend modules.")
+    st.info("This is likely due to a version mismatch or missing file in the deployment environment.")
+    st.exception(e)
+    st.stop()
+
+# Configuration
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api")
 
 # --- Data & Model Initialization (Streamlit Native) ---
 @st.cache_data
