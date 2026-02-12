@@ -135,7 +135,7 @@ INSERT INTO isro_space_missions (mission_id, mission_name, launch_date, launch_v
 (120, 'RLVLEX', '2023-04-02', 'RLV', 'Suborbital', 'Experimental', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'RLVLEX Vehicle'),
 (121, 'TeLEOS-2', '2023-04-22', 'PSLV-C55', 'SSPO', 'Earth Observation', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'TeLEOS-2 Satellite'),
 (122, 'NVS-01', '2023-05-29', 'GSLV-F12', 'GSO', 'Navigation', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'NVS-01 Satellite'),
-(123, 'Chandrayaan-3', '2023-07-14', 'LVM3-M4', 'Lunar', 'Planetary Observation', 'Launch sucessful', 'Satish Dhawan Space Centre, Sriharikota', 'Chandrayaan-3 Lander'),
+(123, 'Chandrayaan-3', '2023-07-14', 'LVM3-M4', 'Lunar', 'Planetary Observation', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'Chandrayaan-3 Lander'),
 (124, 'DS-SAR', '2023-07-30', 'PSLV-C56', 'SSPO', 'Earth Observation', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'DS-SAR Satellite'),
 (125, 'Aditya-L1', '2023-09-02', 'PSLV-C57', 'L1', 'Solar Observation', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'Aditya-L1 Observatory'),
 (126, 'TV-D1', '2023-10-21', 'TV-D1', 'Suborbital', 'Experimental', 'Launch successful', 'Satish Dhawan Space Centre, Sriharikota', 'Gaganyaan Test Vehicle'),

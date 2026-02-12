@@ -4,6 +4,7 @@ pandas
 streamlit
 scikit-learn
 plotly
-
+requests
+numpy
 sqlalchemy
 regex
