@@ -37,10 +37,22 @@ def get_trained_model(_df):
         return pipeline, metrics
     return None, {}
 
-# Initialize Data
-df = get_isro_data()
-# Initialize Model & Metrics
-model_obj, model_metrics = get_trained_model(df)
+# Initialize Data and Model with Error Handling
+try:
+    with st.spinner("Initializing ISRO Data and Model..."):
+        df = get_isro_data()
+        if df is None or df.empty:
+            st.error("⚠️ Failed to load mission data. Please check if 'backend/isro-missions.sql' is present.")
+            st.stop()
+        
+        # Initialize Model & Metrics
+        model_obj, model_metrics = get_trained_model(df)
+        if model_obj is None:
+            st.warning("⚠️ Machine Learning model could not be initialized. Prediction features might be limited.")
+except Exception as e:
+    st.error(f"❌ Application Initialization Error: {str(e)}")
+    st.info("Debugging Info: Check if all dependencies in requirements.txt are installed correctly.")
+    st.stop()
 
 # --- Custom CSS for Space Theme ---
 def get_base64_of_bin_file(bin_file):
@@ -221,12 +233,12 @@ with tab2:
     
     # Model Limitations
     with st.expander("⚠️ Model Limitations & Disclaimer"):
-        st.markdown("""
+        st.markdown(r"""
         - **Data Source**: This model is trained on historical ISRO mission data from Kaggle (1963-2025).
         - **Exclusions**: Real-time factors like weather, sensor health, and payload-specific complexities are not captured.
         - **Interpretations**: Predictions are probabilistic estimates based on historical trends for exploratory analysis, not for operational mission guarantees.
         - **Class Imbalance**: High metrics are influenced by the high historical success rate $(\sim93\%)$.
-        """)
+        """, unsafe_allow_html=True)
     
     st.divider()
     
