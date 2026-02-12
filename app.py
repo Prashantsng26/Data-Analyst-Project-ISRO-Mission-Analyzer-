@@ -1,13 +1,9 @@
 import streamlit as st
-import requests
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import base64
 import os
 import sys
 
 # --- Initial Setup & Page Config ---
+# This MUST be the very first Streamlit command
 st.set_page_config(
     page_title="ISRO Mission Analyzer",
     page_icon="🚀",
@@ -15,8 +11,9 @@ st.set_page_config(
 )
 
 # --- Diagnostic Import Block ---
+# We move EVERY import inside here so we can catch startup failures
 try:
-    # Standard Imports
+    print("DEBUG: Starting import sequence...")
     import requests
     import pandas as pd
     import numpy as np
@@ -25,20 +22,27 @@ try:
     import base64
     import traceback
 
-    # Path setup for backend
-    root_path = os.path.dirname(os.path.abspath(__file__))
-    if root_path not in sys.path:
-        sys.path.insert(0, root_path)
+    # Ensure the current directory is in sys.path for backend imports
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    if current_dir not in sys.path:
+        sys.path.insert(0, current_dir)
+    
+    print(f"DEBUG: Current directory defined as {current_dir}")
 
     # Backend Imports
     from backend.data_loader import load_data
     from backend.eda import get_growth_trend, get_success_rates, get_strategic_focus, get_orbit_complexity
     from backend.ml_model import train_model, get_model_metrics, predict_success, get_feature_importance
+    print("DEBUG: Backend modules loaded successfully.")
 
 except Exception as e:
     st.error("❌ Critical Startup Error: Failed to load dependencies or backend modules.")
-    st.info("This is likely due to a version mismatch or missing file in the deployment environment.")
+    st.info("This is usually caused by a 'ModuleNotFoundError' or a version conflict in requirements.txt.")
+    st.warning("Check the 'Manage App' -> 'Logs' section on your Streamlit Cloud dashboard for details.")
     st.exception(e)
+    # Print to stdout so it shows in Streamlit Cloud logs
+    print(f"FATAL ERROR DURING IMPORT: {str(e)}")
+    traceback.print_exc()
     st.stop()
 
 # Configuration
@@ -47,14 +51,20 @@ API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/api")
 # --- Data & Model Initialization (Streamlit Native) ---
 @st.cache_data
 def get_isro_data():
-    return load_data()
+    try:
+        return load_data()
+    except Exception as e:
+        print(f"ERROR in get_isro_data: {e}")
+        return None
 
 @st.cache_resource
 def get_trained_model(_df):
-    if not _df.empty:
-        # train_model now returns (pipeline, metrics)
-        pipeline, metrics = train_model(_df)
-        return pipeline, metrics
+    try:
+        if _df is not None and not _df.empty:
+            pipeline, metrics = train_model(_df)
+            return pipeline, metrics
+    except Exception as e:
+        print(f"ERROR in get_trained_model: {e}")
     return None, {}
 
 # Initialize Data and Model with Error Handling
@@ -71,17 +81,18 @@ try:
             st.warning("⚠️ Machine Learning model could not be initialized. Prediction features might be limited.")
 except Exception as e:
     st.error(f"❌ Application Initialization Error: {str(e)}")
-    st.info("Debugging Info: Check if all dependencies in requirements.txt are installed correctly.")
     st.stop()
 
 # --- Custom CSS for Space Theme ---
 def get_base64_of_bin_file(bin_file):
     try:
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except FileNotFoundError:
-        return ""
+        if os.path.exists(bin_file):
+            with open(bin_file, 'rb') as f:
+                data = f.read()
+            return base64.b64encode(data).decode()
+    except Exception:
+        pass
+    return ""
 
 def set_png_as_page_bg(png_file):
     bin_str = get_base64_of_bin_file(png_file)
@@ -95,7 +106,6 @@ def set_png_as_page_bg(png_file):
         background-repeat: no-repeat;
         background-attachment: fixed;
     }}
-    /* Make containers semi-transparent to see background */
     .stApp > header {{
         background-color: transparent !important;
     }}
@@ -105,9 +115,6 @@ def set_png_as_page_bg(png_file):
         padding: 1rem 2rem;
         box-shadow: 0 0 20px rgba(0, 200, 255, 0.2);
         max-width: 95%;
-    }}
-    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {{
-        width: 250px;
     }}
     h1, h2, h3, .stMarkdown, .stMetricLabel {{
         color: #e0e0ff !important;
@@ -123,15 +130,11 @@ def set_png_as_page_bg(png_file):
 
 try:
     set_png_as_page_bg('background.png')
-except Exception as e:
+except:
     pass
 
-# Helper to provide data either from API or Local Functions
+# Helper to provide data
 def get_data(endpoint, **kwargs):
-    # If API_URL is set to a non-local or explicitly configured, try requests
-    # But for a simpler "whole-in-streamlit" deployment, we prefer local calls.
-    # We will use local calls as primary to ensure Streamlit Cloud works without backend setup.
-    
     if endpoint == "kpi_total_success_rate":
         rate = df['Success_Flag'].mean() if not df.empty else 0
         return {"success_rate": rate}
@@ -148,7 +151,6 @@ def get_data(endpoint, **kwargs):
     elif endpoint == "feature_importance":
         return get_feature_importance(pipeline=model_obj)
     elif endpoint == "predict_mission":
-        # Ensure model is ready before predicting
         if model_obj is None:
             return {"prediction_probability": None}
         prob = predict_success(kwargs.get('vehicle'), kwargs.get('orbit'), pipeline=model_obj)
@@ -176,9 +178,7 @@ tab1, tab2 = st.tabs(["📈 Strategic Trends", "🔮 Prediction Tool"])
 
 with tab1:
     st.header("Strategic Portfolio Analysis")
-    
     col1, col2 = st.columns(2)
-    
     with col1:
         st.subheader("Growth Trend")
         growth_data = get_data("growth_trend")
@@ -187,7 +187,6 @@ with tab1:
             fig_growth = px.line(df_growth, x='Year', y='Mission_Count', title='Missions Launched per Year', markers=True)
             fig_growth.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff')
             st.plotly_chart(fig_growth, use_container_width=True)
-            
     with col2:
         st.subheader("Success Rates by Vehicle Family")
         success_data = get_data("success_rates")
@@ -197,9 +196,8 @@ with tab1:
                                  text_auto='.2%', color='Family')
             fig_success.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff')
             st.plotly_chart(fig_success, use_container_width=True)
-            
-    col3, col4 = st.columns(2)
     
+    col3, col4 = st.columns(2)
     with col3:
         st.subheader("Strategic Focus (Application)")
         focus_data = get_data("strategic_focus")
@@ -208,7 +206,6 @@ with tab1:
             fig_focus = px.pie(df_focus, names='Application', values='Count', title='Mission Distribution by Application')
             fig_focus.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff')
             st.plotly_chart(fig_focus, use_container_width=True)
-            
     with col4:
         st.subheader("Mission Capabilities (Vehicle to Orbit)")
         orbit_data = get_data("orbit_complexity")
@@ -223,64 +220,40 @@ with tab1:
 
 with tab2:
     st.header("Exploratory Success Estimation")
-    st.markdown("Estimate the probability of success for a hypothetical mission configuration based on historical patterns.")
-    
-    # Model Performance
     perf_data = get_data("model_performance")
     if perf_data:
         st.subheader("Model Performance Indicators")
-        st.info("“High recall and accuracy are influenced by the dominance of successful missions in historical data.”")
-        
         m_col1, m_col2, m_col3, m_col4 = st.columns(4)
         m_col1.metric("Accuracy", f"{perf_data.get('Accuracy',0):.2f}")
         m_col2.metric("Precision", f"{perf_data.get('Precision',0):.2f}")
         m_col3.metric("Recall", f"{perf_data.get('Recall',0):.2f}")
         m_col4.metric("F1-Score", f"{perf_data.get('F1-Score',0):.2f}")
-        
-        st.caption("“ROC-AUC is de-emphasized due to class imbalance in historical mission outcomes; precision–recall metrics better reflect model behavior.”")
     
-    # Feature Importance Chart
     feat_data = get_data("feature_importance")
     if feat_data:
-        st.subheader("Top Influential Features (Tree-Based Importance)")
+        st.subheader("Top Influential Features")
         df_feat = pd.DataFrame(feat_data)
-        fig_feat = px.bar(df_feat, y='Feature', x='Importance', orientation='h', 
-                          title='Top 10 Influential Factors (Exploratory)',
-                          color='Importance', color_continuous_scale='Viridis')
-        fig_feat.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff',
-                               yaxis={'categoryorder':'total ascending'})
+        fig_feat = px.bar(df_feat, y='Feature', x='Importance', orientation='h', color='Importance')
+        fig_feat.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#e0e0ff')
         st.plotly_chart(fig_feat, use_container_width=True)
     
-    # Model Limitations
     with st.expander("⚠️ Model Limitations & Disclaimer"):
         st.markdown(r"""
         - **Data Source**: This model is trained on historical ISRO mission data from Kaggle (1963-2025).
-        - **Exclusions**: Real-time factors like weather, sensor health, and payload-specific complexities are not captured.
-        - **Interpretations**: Predictions are probabilistic estimates based on historical trends for exploratory analysis, not for operational mission guarantees.
         - **Class Imbalance**: High metrics are influenced by the high historical success rate $(\sim93\%)$.
         """, unsafe_allow_html=True)
     
     st.divider()
-    
-    # Input Form
     with st.form("prediction_form"):
-        vehicle_options = sorted(df['launch_vehicle'].unique().tolist()) if not df.empty else ['PSLV', 'GSLV']
-        orbit_options = sorted(df['orbit_type'].unique().tolist()) if not df.empty else ['SSPO', 'GSO']
-        
-        p_vehicle = st.selectbox("Launch Vehicle Family/Type", vehicle_options)
-        p_orbit = st.selectbox("Target Orbit", orbit_options)
-        
-        submit = st.form_submit_button("Predict Probability")
-        
-        if submit:
-            # Fetch mission prediction from backend functions
+        vehicle_options = sorted(df['launch_vehicle'].unique().tolist()) if not df.empty else ['PSLV']
+        orbit_options = sorted(df['orbit_type'].unique().tolist()) if not df.empty else ['LEO']
+        p_vehicle = st.selectbox("Launch Vehicle", vehicle_options)
+        p_orbit = st.selectbox("Orbit", orbit_options)
+        if st.form_submit_button("Predict Probability"):
             res = get_data("predict_mission", vehicle=p_vehicle, orbit=p_orbit)
-            # Safe extraction of probability with None check
-            prob = res.get("prediction_probability") if (isinstance(res, dict)) else None
-            
+            prob = res.get("prediction_probability")
             if prob is not None:
                 st.success(f"Estimated Success Probability: {float(prob)*100:.2f}%")
-                if float(prob) > 0.8:
-                    st.balloons()
+                if float(prob) > 0.8: st.balloons()
             else:
-                st.error("Exploratory prediction unavailable. The model is either initializing or the parameters provided are outside historical bounds.")
+                st.error("Prediction unavailable.")
